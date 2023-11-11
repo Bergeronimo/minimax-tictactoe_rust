@@ -1,4 +1,6 @@
+use rand::seq::SliceRandom;
 use rand::Rng;
+use std::cmp::Ordering;
 use std::io;
 
 #[derive(Copy, Clone, PartialEq)]
@@ -185,22 +187,31 @@ fn is_board_full(board: &[char; 9]) -> bool {
 }
 
 fn computer_turn_minimax(board: &mut [char; 9], computer_player: Player, human_player: Player) {
+    let mut rng = rand::thread_rng();
     let mut best_score = i32::MIN;
-    let mut best_move = None;
+    let mut best_moves = Vec::new();
 
     for i in 0..board.len() {
         if board[i] == ' ' {
             board[i] = computer_player.as_char();
             let score = minimax(board, 9, false, computer_player, human_player);
             board[i] = ' ';
-            if score > best_score {
-                best_score = score;
-                best_move = Some(i);
+
+            match score.cmp(&best_score) {
+                Ordering::Greater => {
+                    best_score = score;
+                    best_moves.clear();
+                    best_moves.push(i);
+                }
+                Ordering::Equal => {
+                    best_moves.push(i);
+                }
+                Ordering::Less => {}
             }
         }
     }
 
-    if let Some(move_index) = best_move {
+    if let Some(&move_index) = best_moves.choose(&mut rng) {
         board[move_index] = computer_player.as_char();
     }
 }
