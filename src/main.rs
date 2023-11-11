@@ -1,4 +1,3 @@
-use rand::seq::SliceRandom;
 use rand::Rng;
 use std::cmp::Ordering;
 use std::io;
@@ -187,10 +186,10 @@ fn is_board_full(board: &[char; 9]) -> bool {
 }
 
 fn computer_turn_minimax(board: &mut [char; 9], computer_player: Player, human_player: Player) {
-    let mut rng = rand::thread_rng();
     let mut best_score = i32::MIN;
     let mut best_moves = Vec::new();
 
+    // First pass: find all best moves
     for i in 0..board.len() {
         if board[i] == ' ' {
             board[i] = computer_player.as_char();
@@ -203,15 +202,38 @@ fn computer_turn_minimax(board: &mut [char; 9], computer_player: Player, human_p
                     best_moves.clear();
                     best_moves.push(i);
                 }
-                Ordering::Equal => {
-                    best_moves.push(i);
-                }
+                Ordering::Equal => best_moves.push(i),
                 Ordering::Less => {}
             }
         }
     }
 
-    if let Some(&move_index) = best_moves.choose(&mut rng) {
+    // Second pass: evaluate each best move to find the one with the least good responses
+    let mut least_responses = i32::MAX;
+    let mut best_final_move = None;
+    for &move_index in &best_moves {
+        board[move_index] = computer_player.as_char();
+        let mut responses = 0;
+        for j in 0..board.len() {
+            if board[j] == ' ' {
+                board[j] = human_player.as_char();
+                let score = minimax(board, 9, false, computer_player, human_player);
+                if score <= 0 {
+                    responses += 1;
+                }
+                board[j] = ' ';
+            }
+        }
+        board[move_index] = ' ';
+
+        if responses < least_responses {
+            least_responses = responses;
+            best_final_move = Some(move_index);
+        }
+    }
+
+    // Make the best final move
+    if let Some(move_index) = best_final_move {
         board[move_index] = computer_player.as_char();
     }
 }
