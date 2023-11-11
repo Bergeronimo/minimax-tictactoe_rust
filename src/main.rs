@@ -54,7 +54,11 @@ fn main() {
         print_board(&board);
 
         if let Some(winner) = check_winner(&board) {
-            println!("Player {} wins!", winner.as_char());
+            if winner == human_player {
+                println!("You Win!");
+            } else {
+                println!("You Lose!");
+            }
             break;
         } else if board.iter().all(|&x| x != ' ') {
             println!("It's a tie!");
